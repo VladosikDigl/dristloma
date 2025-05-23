@@ -1,0 +1,62 @@
+﻿@model HomeViewModel
+
+<div class="container">
+    <!-- Ряд 1: Напоминания + Кнопки -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="info-block p-3 shadow">
+                <h4>📌 Напоминания</h4>
+                <!-- Динамические данные -->
+                <ul>
+                    @foreach (var item in Model.Reminders)
+                    {
+                        <li>@item</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="info-block p-3 shadow">
+                <h4>🚀 Кнопки</h4>
+                @foreach (var btn in Model.Buttons)
+                {
+                    <button class="btn @btn.Value">@btn.Key</button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Ряд 2: График на всю ширину -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="info-block p-3 shadow">
+                <h4>📊 График</h4>
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Динамические данные из модели
+        const chartData = {
+            labels: @Html.Raw(Json.Serialize(Model.ChartData.Labels)),
+            datasets: [{
+                label: 'Задачи',
+                data: @Html.Raw(Json.Serialize(Model.ChartData.Values)),
+                backgroundColor: '@Model.ChartData.BackgroundColor'
+            }]
+        };
+
+        // Инициализация графика
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line', // Тип графика (можно поменять на bar, pie и т.д.)
+            data: chartData,
+            options: { responsive: true }
+        });
+    </script>
+}

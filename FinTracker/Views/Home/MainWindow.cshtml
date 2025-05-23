@@ -1,0 +1,10 @@
+﻿@{
+    ViewData["Title"] = "Добро пожаловать";
+}
+
+<div>
+    <h1>Успешно вошли в аккаунт!</h1>
+    <form asp-controller="Home" asp-action="Logout" method="post" class="d-inline">
+        <button type="submit" class="btn btn-outline-danger">Выход</button>
+    </form>
+</div>

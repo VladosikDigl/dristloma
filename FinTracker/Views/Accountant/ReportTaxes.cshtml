@@ -1,0 +1,155 @@
+﻿@model FinTracker.Models.TaxReportViewModel
+@{
+    ViewData["Title"] = "Налоговый отчет";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2 class="text-primary mb-4">📄 Налоговый отчет</h2>
+
+    <form asp-action="ReportTaxes" method="post" class="row g-3">
+        
+        <div class="col-md-3">
+            <label class="form-label">Квартал</label>
+            <select asp-for="Quarter" class="form-select" onchange="onQuarterChange()">
+                @{
+                    var currentQuarter = (DateTime.Now.Month - 1) / 3 + 1;
+                    for (int q = 1; q <= 4; q++)
+                    {
+                        if (Model.Quarter == q || (Model.Quarter == 0 && q == currentQuarter))
+                        {
+                            <option value="@q" selected>@q квартал</option>
+                        }
+                        else
+                        {
+                            <option value="@q">@q квартал</option>
+                        }
+                    }
+                }
+            </select>
+            <span asp-validation-for="Quarter" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Система налогообложения</label>
+            <select asp-for="TaxSystem" class="form-select" onchange="onSystemChange()">
+                <option value="">-- Выберите --</option>
+                <option value="OSNO">ОСНО</option>
+                <option value="USN">УСН</option>
+            </select>
+        </div>
+
+        <div class="col-md-3" id="usnRateBlock" style="display:none;">
+            <label class="form-label">Ставка УСН</label>
+            <select asp-for="UsnRateOption" class="form-select" onchange="onUsnChange()">
+                <option value="">-- Выберите --</option>
+                <option value="6">6% (с доходов)</option>
+                <option value="15">15% (с доходов минус расходы)</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-outline-primary w-100">📊 Построить отчет</button>
+        </div>
+    </form>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-md-8" id="taxPartialBlock">
+            <p>TaxSystem: @Model.TaxSystem</p>
+
+            @if (Model.TaxSystem == "OSNO")
+            {
+                @await Html.PartialAsync("ReportTaxes_OSNO", Model)
+            }
+            else if (Model.TaxSystem == "USN" && !string.IsNullOrEmpty(Model.UsnRateOption))
+            {
+                @await Html.PartialAsync("ReportTaxes_USN", Model)
+            }
+
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Результаты</h5>
+                    @if (Model.IsCalculated)
+                    {
+                        <ul class="list-group">
+                            <li class="list-group-item">Налог: <strong>@Model.TaxAmount.ToString("C")</strong></li>
+                            <li class="list-group-item">НДФЛ с ЗП: <strong>@Model.NdflAmount.ToString("C")</strong></li>
+                            @if (Model.PropertyTaxApplied == true)
+                            {
+                                <li class="list-group-item">Имущественный налог: <strong>@Model.PropertyTaxAmount.ToString("C")</strong></li>
+                            }
+                        </ul>
+                        <form asp-action="SaveTaxReport" method="post" class="mt-3">
+                            <button type="submit" class="btn btn-success w-100">💾 Сохранить</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Сначала заполните данные и нажмите «Построить отчет»</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleAll(src, prefix) {
+            document.querySelectorAll(`input[name='Selected${prefix === 'inc' ? 'Income' : 'Expense'}Ids']`)
+                .forEach(cb => cb.checked = src.checked);
+        }
+
+        function togglePropertyTax() {
+            var cb = document.getElementById('propertyTaxCheck');
+            document.getElementById('propertyTaxBlock').style.display = cb.checked ? 'flex' : 'none';
+        }
+        
+        function onSystemChange() {
+            var system = document.querySelector("select[name='TaxSystem']").value;
+            var rate = document.querySelector("select[name='UsnRateOption']")?.value || '';
+            var usnRateBlock = document.getElementById('usnRateBlock');
+
+            usnRateBlock.style.display = system === 'USN' ? 'block' : 'none';
+
+            loadTaxPartial(system, rate);
+        }
+
+        function onUsnChange() {
+            var system = 'USN'; 
+            var rate = document.querySelector("select[name='UsnRateOption']").value;
+
+            loadTaxPartial(system, rate);
+        }
+
+        function onQuarterChange() {
+            var system = document.querySelector("select[name='TaxSystem']").value;
+            var rate = document.querySelector("select[name='UsnRateOption']")?.value || '';
+
+            if (system) {
+                loadTaxPartial(system, rate);
+            }
+        }
+
+        function loadTaxPartial(system, rate) {
+            var quarter = document.querySelector("select[name='Quarter']").value;
+            fetch(`/Accountant/LoadTaxPartial?system=${system}&rate=${rate}&quarter=${quarter}`)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('taxPartialBlock').innerHTML = html;
+                })
+                .catch(err => console.error('Ошибка:', err));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var sys = document.querySelector("select[name='TaxSystem']").value;
+            if (sys === 'USN') {
+                document.getElementById('usnRateBlock').style.display = 'block';
+            }
+        });
+    </script>
+}

@@ -1,0 +1,78 @@
+﻿@model FinTracker.Models.FormASalaryViewModel
+@{
+    ViewData["Title"] = "Управление зарплатой";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2 class="text-primary mb-4">💼 Управление зарплатой</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Действия</h5>
+                    <div class="d-grid gap-2">
+                        <form asp-action="CalculateSalary" method="post">
+                            <div class="mb-3">
+                                <label for="SalaryType" class="form-label">Тип выплаты</label>
+                                <select name="salaryType" class="form-select" required>
+                                    <option value="Advance">Аванс</option>
+                                    <option value="Final">Окончательный расчет</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary">🔢 Рассчитать зарплату</button>
+                        </form>
+                    </div>
+                    <hr />
+                    <h6>Оплата</h6>
+                    <form asp-action="MarkSalaryAsPaid" method="post">
+                        <div class="mb-3">
+                            <label for="SalaryId" class="form-label">Выберите запись</label>
+                            <select asp-for="SelectedSalaryId" asp-items="Model.SalaryList" class="form-select">
+                                <option value="">-- Не оплачено --</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">💵 Отметить как оплачено</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">📋 Список начисленной зарплаты</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Сотрудник</th>
+                                    <th>Дата</th>
+                                    <th>Тип</th>
+                                    <th>Сумма</th>
+                                    <th>НДФЛ</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(var s in Model.Salaries)
+                                {
+                                    <tr class="@(s.IsPaid ? "table-success" : "")">
+                                        <td>@s.EmployeeName</td>
+                                        <td>@s.Date.ToString("dd.MM.yyyy")</td>
+                                        <td>@s.Type</td>
+                                        <td>@s.Amount.ToString("C")</td>
+                                        <td>@s.NDFL.ToString("C")</td>
+                                        <td>@(s.IsPaid ? "Оплачено" : "Не оплачено")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

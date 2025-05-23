@@ -1,0 +1,113 @@
+﻿@model FinTracker.Models.AddTransactionViewModel
+@{
+    ViewData["Title"] = "Добавление транзакции";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+
+    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+    {
+        <div class="text-danger">@error.ErrorMessage</div>
+    }
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="text-primary mb-3">💰 Добавить транзакцию</h5>
+                    <form asp-action="AddTransaction" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Сумма</label>
+                            <input asp-for="Amount" class="form-control" type="number" step="0.01" required />
+                        </div>
+                        <div class="mb-3"> 
+                            <label class="form-label">Тип</label>
+                            <select asp-for="Type" class="form-select">
+                                <option value="Income">Доход</option>
+                                <option value="ExpensePaid">Расход</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Категория</label>
+                            <select asp-for="CategoryId" asp-items="Model.CategoryList" class="form-select">
+                                <option disabled selected>Выберите категорию</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            <input asp-for="Description" class="form-control" />
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-success">Добавить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="text-primary mb-3">🔍? Добавить новую категорию</h5>
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["Success"]</div>
+                    }
+                    <form asp-action="AddCategory" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Название новой категории</label>
+                            <input type="text" name="categoryName" class="form-control" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание новой категории</label>
+                            <input type="text" name="categoryDescription" class="form-control" />
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-outline-primary">Добавить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-secondary mb-3">📋 История транзакций</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Категория</th>
+                                    <th>Сумма</th>
+                                    <th>Тип</th>
+                                    <th>Дата</th>
+                                    <th>Описание</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in Model.Transactions)
+                                {
+                                    var rowClass = t.Type == FinTracker.Models.Database.TransactionType.ExpensePaid
+                                    ? "table-danger"
+                                    : (t.Type == FinTracker.Models.Database.TransactionType.Income ? "table-success" : "");
+                                    <tr class="@rowClass">
+                                        <td>@t.CategoryName</td>
+                                        <td>@t.Amount.ToString("C")</td>
+                                        <td>@t.Type</td>
+                                        <td>@t.Date.ToString("dd.MM.yyyy")</td>
+                                        <td>@t.Description.ToString()</td>
+                                        <td>
+                                            <a asp-action="EditTransaction" asp-route-id="@t.Id" class="btn btn-sm btn-warning">✏️</a>
+                                            <a asp-action="DeleteTransaction" asp-route-id="@t.Id" class="btn btn-sm btn-danger" onclick="return confirm('Удалить транзакцию?');">🗑️</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
